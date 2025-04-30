@@ -1,4 +1,3 @@
-#![feature(path_file_prefix)]
 #![allow(unused_unsafe)]
 
 mod parse_assertions;
@@ -13,7 +12,7 @@ use tree_sitter::Language;
 unsafe fn load_language(
     parser_file: &Path,
 ) -> anyhow::Result<(Language, Box<libloading::Library>)> {
-    let lang_name = parser_file.file_prefix();
+    let lang_name = parser_file.file_stem();
     unsafe {
         let lib = Box::new(libloading::Library::new(&*parser_file.to_string_lossy())?);
         let func: libloading::Symbol<unsafe extern "C" fn() -> Language> = lib.get(
@@ -53,7 +52,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let (language, _lib) = unsafe { load_language(&args.parser_file)? };
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(language)?;
+    parser.set_language(&language)?;
 
     let assertions = parse_position_comments(
         &mut parser,
