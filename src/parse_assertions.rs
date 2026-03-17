@@ -14,13 +14,6 @@ pub struct Point {
     pub column: usize,
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct CaptureInfo {
-    pub name: String,
-    pub start: Point,
-    pub end: Point,
-}
-
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Assertion {
     pub position: Point,
