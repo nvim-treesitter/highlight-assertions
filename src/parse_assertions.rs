@@ -45,42 +45,41 @@ pub fn parse_position_comments(
             let node = cursor.node();
 
             // Find every comment node.
-            if node.kind().contains(comment_node) {
-                if let Ok(text) = node.utf8_text(source) {
-                    let mut position = node.start_position();
-                    if position.row > 0 {
-                        // Find the arrow character ("^" or '<-") in the comment. A left arrow
-                        // refers to the column where the comment node starts. An up arrow refers
-                        // to its own column.
-                        let mut has_left_caret = false;
-                        let mut has_arrow = false;
-                        let mut arrow_end = 0;
-                        for (i, c) in text.char_indices() {
-                            arrow_end = i + 1;
-                            if c == '-' && has_left_caret {
-                                has_arrow = true;
-                                break;
-                            }
-                            if c == '^' {
-                                has_arrow = true;
-                                position.column += i;
-                                break;
-                            }
-                            has_left_caret = c == '<';
+            if node.kind().contains(comment_node)
+                && let Ok(text) = node.utf8_text(source)
+            {
+                let mut position = node.start_position();
+                if position.row > 0 {
+                    // Find the arrow character ("^" or '<-") in the comment. A left arrow
+                    // refers to the column where the comment node starts. An up arrow refers
+                    // to its own column.
+                    let mut has_left_caret = false;
+                    let mut has_arrow = false;
+                    let mut arrow_end = 0;
+                    for (i, c) in text.char_indices() {
+                        arrow_end = i + 1;
+                        if c == '-' && has_left_caret {
+                            has_arrow = true;
+                            break;
                         }
-                        static REGEX: Lazy<Regex> =
-                            Lazy::new(|| Regex::new("[!\\w_\\-.]+").unwrap());
+                        if c == '^' {
+                            has_arrow = true;
+                            position.column += i;
+                            break;
+                        }
+                        has_left_caret = c == '<';
+                    }
+                    static REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("[!\\w_\\-.]+").unwrap());
 
-                        // If the comment node contains an arrow and a highlight name, record the
-                        // highlight name and the position.
-                        if let (true, Some(mat)) = (has_arrow, REGEX.find(&text[arrow_end..])) {
-                            assertion_ranges.push((node.start_position(), node.end_position()));
-                            let tree_sitter::Point { row, column } = position;
-                            result.push(Assertion {
-                                position: Point { row, column },
-                                expected_capture_name: mat.as_str().to_string(),
-                            });
-                        }
+                    // If the comment node contains an arrow and a highlight name, record the
+                    // highlight name and the position.
+                    if let (true, Some(mat)) = (has_arrow, REGEX.find(&text[arrow_end..])) {
+                        assertion_ranges.push((node.start_position(), node.end_position()));
+                        let tree_sitter::Point { row, column } = position;
+                        result.push(Assertion {
+                            position: Point { row, column },
+                            expected_capture_name: mat.as_str().to_string(),
+                        });
                     }
                 }
             }
